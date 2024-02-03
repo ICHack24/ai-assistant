@@ -1,4 +1,4 @@
 *.pyc
 env/
-openai_key.sh
+keys.sh
 *.wav
