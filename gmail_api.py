@@ -1,3 +1,7 @@
+import os
+from pathlib import Path
+
+from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
@@ -6,10 +10,32 @@ from googleapiclient.discovery import build
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 
 def authenticate():
-    flow = InstalledAppFlow.from_client_secrets_file(
-        "/home/pita/Documents/PersonalProjects/ICHack24/credentials.json", SCOPES)
-    credentials = flow.run_local_server(port=0)
-    return credentials
+    creds = None
+    # The file token.json stores the user's access and refresh tokens, and is
+    # created automatically when the authorization flow completes for the first
+    # time.
+
+    current_dir = os.path.dirname(os.path.realpath(__file__))
+    parent_dir = Path(current_dir).parent
+
+    token_path = parent_dir / "token.json"
+    credentials_path = parent_dir / "credentials.json"
+
+    if os.path.exists(token_path):
+        creds = Credentials.from_authorized_user_file(token_path, SCOPES)
+    # If there are no (valid) credentials available, let the user log in.
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file(
+                credentials_path, SCOPES
+            )
+            creds = flow.run_local_server(port=0)
+        # Save the credentials for the next run
+        with open(token_path, "w") as token:
+            token.write(creds.to_json())
+    return creds
 
 def list_most_recent_emails():
     # Authenticate and authorize
@@ -21,17 +47,31 @@ def list_most_recent_emails():
     user_email = user_info['emailAddress']
 
     # List the most recent emails
-    results = service.users().messages().list(userId=user_email, labelIds=['INBOX'], maxResults=5).execute()
+    results = service.users().messages().list(userId=user_email, labelIds=['INBOX'], maxResults=2).execute()
     messages = results.get('messages', [])
 
     if not messages:
         print('No messages found.')
     else:
-        print('Most recent emails:')
+        print(f'Most recent emails ({len(messages)}):')
         for message in messages:
             msg = service.users().messages().get(userId=user_email, id=message['id']).execute()
-            print(f"\n{msg}\n")
-            print(f"Subject: {msg['subject']}, Date: {msg['internalDate']}")
+            # print(f"\n{msg}\n\n\n")
+            # for k, v in msg.items():
+            #     if k == "payload":
+            #         for k2, v2 in v.items():
+            #             if k2 == "headers":
+            #                 for item_ in v2:
+            #                     print(f"~~ {item_}\n\n")
+            #                 # for k3, v3 in v2.items():
+            #                 #     print("~~ ", k3, "\n", v3, "\n\n")
+            #                 continue
+            #             print("## ", k2, "\n", v2, "\n\n")
+            #         continue
+            #     print(k, "\n", v, "\n\n")
+            # print(f"Subject: {msg['subject']}, Date: {msg['internalDate']}")
+            print(f"Subject: {msg['payload']['headers'][-3]['value']},\nDate: {msg['payload']['headers'][-5]['value']},\nFrom: {msg['payload']['headers'][-6]['value']}")
+            print("\n", msg['snippet'], "\n\n\n")
 
 if __name__ == '__main__':
     list_most_recent_emails()
@@ -59,7 +99,7 @@ if __name__ == '__main__':
 #     # The file token.json stores the user's access and refresh tokens, and is
 #     # created automatically when the authorization flow completes for the first
 #     # time.
-#     if os.path.exists("token.json"):
+#     if os.path.exists("token5.json"):
 #         print("Here")
 #         creds = Credentials.from_authorized_user_file("token.json", SCOPES)
 #     # If there are no (valid) credentials available, let the user log in.
