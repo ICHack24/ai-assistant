@@ -1,4 +1,6 @@
 import os
+import pdb
+import sys
 import pyaudio
 import wave
 from pynput import keyboard
@@ -25,7 +27,7 @@ WAVE_OUTPUT_FILENAME = "hello.wav"
 class Speech2Text:
     def __init__(self, temp_voice_path="temp_voice.wav"):
         self.audio = pyaudio.PyAudio()
-        self.frames = []
+        os.system('clear') # PyAudio outputs a lot
         self.recording = False
         self.model = whisper.load_model("tiny.en", device="cpu")
         self.temp_voice_path = temp_voice_path
@@ -35,11 +37,7 @@ class Speech2Text:
             self.recording = not self.recording
 
     def record(self, out_path):
-        stream = self.audio.open(format=FORMAT, channels=CHANNELS,
-                                 rate=RATE, input=True,
-                                 frames_per_buffer=CHUNK)
-
-        print('Press space to speak to the AI')
+        print('Press space to unmute')
 
         # Start the listener in a non-blocking way
         listener = keyboard.Listener(on_press=self._on_press)
@@ -48,12 +46,20 @@ class Speech2Text:
         while not self.recording:
             pass
 
-        print('The AI is listening')
+        # Print backspace to undo the space press
+        sys.stdout.write('\b')
+        stream = self.audio.open(format=FORMAT, channels=CHANNELS,
+                                 rate=RATE, input=True,
+                                 frames_per_buffer=CHUNK)
+        frames = []
+        print('The AI is listening (press space to stop)')
 
         while self.recording:
             data = stream.read(CHUNK)
-            self.frames.append(data)
+            frames.append(data)
 
+        # Print backspace to undo the space press
+        sys.stdout.write('\b')
         print('The AI has finished listening')
 
         listener.stop()
@@ -61,11 +67,16 @@ class Speech2Text:
         stream.close()
 
         # Save the recorded data
+        # First delete the file if it already exists
+        try:
+            os.remove(out_path)
+        except FileNotFoundError:
+            pass
         wf = wave.open(out_path, 'wb')
         wf.setnchannels(CHANNELS)
         wf.setsampwidth(self.audio.get_sample_size(FORMAT))
         wf.setframerate(RATE)
-        wf.writeframes(b''.join(self.frames))
+        wf.writeframes(b''.join(frames))
         wf.close()
 
     def transcribe(self, voice_path):
@@ -74,7 +85,7 @@ class Speech2Text:
 
     def hear_command(self):
         self.record(self.temp_voice_path)
-        transcription = self.transcribe(self.temp_voice_path)
+        transcription = self.transcribe(self.temp_voice_path).trim()
         return transcription
 
 if __name__ == "__main__":
