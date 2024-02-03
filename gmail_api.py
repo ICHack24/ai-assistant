@@ -56,21 +56,21 @@ def list_most_recent_emails():
         print(f'Most recent emails ({len(messages)}):')
         for message in messages:
             msg = service.users().messages().get(userId=user_email, id=message['id']).execute()
-            # print(f"\n{msg}\n\n\n")
-            # for k, v in msg.items():
-            #     if k == "payload":
-            #         for k2, v2 in v.items():
-            #             if k2 == "headers":
-            #                 for item_ in v2:
-            #                     print(f"~~ {item_}\n\n")
-            #                 # for k3, v3 in v2.items():
-            #                 #     print("~~ ", k3, "\n", v3, "\n\n")
-            #                 continue
-            #             print("## ", k2, "\n", v2, "\n\n")
-            #         continue
-            #     print(k, "\n", v, "\n\n")
+            print(f"\n{msg}\n\n\n")
+            for k, v in msg.items():
+                if k == "payload":
+                    for k2, v2 in v.items():
+                        if k2 == "headers":
+                            for item_ in v2:
+                                print(f"~~ {item_}\n\n")
+                            # for k3, v3 in v2.items():
+                            #     print("~~ ", k3, "\n", v3, "\n\n")
+                            continue
+                        print("## ", k2, "\n", v2, "\n\n")
+                    continue
+                print(k, "\n", v, "\n\n")
             # print(f"Subject: {msg['subject']}, Date: {msg['internalDate']}")
-            print(f"Subject: {msg['payload']['headers'][-3]['value']},\nDate: {msg['payload']['headers'][-5]['value']},\nFrom: {msg['payload']['headers'][-6]['value']}")
+            # print(f"Subject: {msg['payload']['headers'][-3]['value']},\nDate: {msg['payload']['headers'][-5]['value']},\nFrom: {msg['payload']['headers'][-6]['value']}")
             print("\n", msg['snippet'], "\n\n\n")
 
 if __name__ == '__main__':
