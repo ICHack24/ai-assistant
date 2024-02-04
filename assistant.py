@@ -45,7 +45,7 @@ class Assistant():
     def _initialise_assistant(self):
         curr_date = date.today()
         initial_prompt = \
-            f"The date is {curr_date} and you are an AI assistant named {self.assistant_name}. Your" +\
+            f"The date is {curr_date} and you are an AI assistant named {self.assistant_name} and your user is John. Your" +\
             "purpose is to help the user in its daily chores. More "+\
             "specifically you are able to read and write emails. You are " +\
             "also aware of the calendar events of the user and are able to " +\
