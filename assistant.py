@@ -1,17 +1,20 @@
 from typing import Union
 import warnings
+from booking.booking_api import BookingAPI
 
 from llm import LangModel
 from speech2text import Speech2Text
 from Emails.email_api import EmailAPI
 from Emails.func_schema import email_tools
 from Emails.email_llm_interface import *
+from booking.booking_func_schema import booking_tools
+from booking.booking_llm_interface import *
 
 from openai.types.chat import ChatCompletion, ChatCompletionMessage
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
-tools = email_tools
+tools = email_tools + booking_tools
 
 class Assistant():
     def __init__(self,
@@ -26,11 +29,12 @@ class Assistant():
         self.tool_choice = None
 
         self.emailAPI = EmailAPI()
+        self.bookingAPI = BookingAPI()
         self._initialise_assistant()
 
     def _initialise_assistant(self):
         initial_prompt = \
-            f"You are an AI assistant named {self.assistant_name}. Your" +\
+            f"It is Sunday 4th February 2024 and you are an AI assistant named {self.assistant_name}. Your" +\
             "purpose is to help the user in its daily chores. More "+\
             "specifically you are able to read and write emails. You are " +\
             "also aware of the calendar events of the user and are able to " +\
@@ -96,6 +100,10 @@ class Assistant():
             self._process_email_funcs(
                 f_id, f_name, f_args
             )
+        elif f_entity == "booking":
+            self._process_booking_funcs(
+                f_id, f_name, f_args
+            )
 
     def _process_email_funcs(self,
                              f_id: int,
@@ -140,6 +148,22 @@ class Assistant():
                 "me know if you sent the email successfully."
             self._prompt_model(user_prompt)
 
+    # Example user request: Can you please help me book a table for 2 at my favourite restaurant for 7pm next Saturday?
+    def _process_booking_funcs(self,
+                                f_id: int,
+                                f_name: str,
+                                f_args: str):
+        if f_name == "booking_create_booking":
+            f_results = create_booking(self.bookingAPI, f_args)
+            # print(f"\n\nTool input:\n{f_results}\n\n")
+            self.lang_model.tool_prompt(
+                f_id, f_name, f_results
+            )
+            user_prompt = \
+                "Reply to my previous request by letting " +\
+                "me know that you submitted the booking request. Be positive but concise. Mention the name of the restaurant. Ignore anything about whether the booking was confirmed or not."
+            self._prompt_model(user_prompt)
+
     def converse(self):
         # print('You are now speaking to the AI assistant')
         while True:
@@ -153,5 +177,5 @@ class Assistant():
             # print(response)
 
 if __name__ == '__main__':
-    assistant = Assistant(llm_model="gpt-3.5-turbo-0125")
+    assistant = Assistant(llm_model="gpt-4")
     assistant.converse()

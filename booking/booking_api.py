@@ -11,6 +11,10 @@ class BookingAPI():
         self.auth_headers = {
             'Authorization': f'Basic {encoded_key}',
         }
+        self.user_details = {
+            "name": "John Appleseed",
+            "email": "imperialhackathon@gmail.com"
+        }
 
     # data = {
     #         "date": "2021-09-18",
@@ -33,8 +37,9 @@ class BookingAPI():
     #         "languageCode": "en"
     # }
 
+    # Returns booking ID string
     @retry(wait=wait_random_exponential(multiplier=0.5, max=40), stop=stop_after_attempt(5))
-    def create_booking(self, date, time, people, name, email):
+    def create_booking(self, date, time, people):
         url = "https://api.resos.com/v1/bookings"
         data = {
             "date": date,
@@ -45,8 +50,8 @@ class BookingAPI():
                 "A3CAfJycSJMHEWHHd"
             ],
             "guest": {
-                "name": name,
-                "email": email,
+                "name": self.user_details["name"],
+                "email": self.user_details["email"],
                 "notificationEmail": True
             },
             "status": "request",
@@ -63,5 +68,5 @@ class BookingAPI():
 
 if __name__ == "__main__":
     api = BookingAPI()
-    response = api.create_booking("2024-02-04", "18:00", 2, "Luke Skywalker", "imperialhackathon@gmail.com")
+    response = api.create_booking("2024-02-04", "18:00", 2)
     print(response)
