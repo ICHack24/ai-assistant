@@ -16,6 +16,8 @@ from booking.booking_llm_interface import *
 
 from openai.types.chat import ChatCompletion, ChatCompletionMessage
 
+from text2speech import Text2Speech
+
 warnings.filterwarnings("ignore", category=UserWarning)
 
 tools = email_tools + calendar_tools + booking_tools
@@ -23,9 +25,10 @@ tools = email_tools + calendar_tools + booking_tools
 class Assistant():
     def __init__(self,
                  cache_path="llm_cache.json",
-                 assistant_name='AI-Assistant',
+                 assistant_name='Aida',
                  llm_model='gpt-4'):
         self.speech2text = Speech2Text()
+        self.text2speech = Text2Speech()
         self.assistant_name = assistant_name
         self.lang_model = LangModel(
             read_cache=True, cache_path=cache_path, model_name=llm_model)
@@ -61,14 +64,14 @@ class Assistant():
 
     def speak(self, 
               response: Union[str, ChatCompletionMessage],
-              mode="text"):
+              mode="speech"):
         if isinstance(response, str):
             r_text = response
         else:
             r_text = response.content
-        if mode == "text":
-            print(f"\n{self.assistant_name}:\n{r_text}\n")
-        #TODO: Add text to speech
+        print(f"\n{self.assistant_name}:\n{r_text}\n")
+        if mode == "speech":
+            self.text2speech.speak(r_text)
             
     def listen(self, mode="speech") -> ChatCompletion:
         self.tool_choice = None

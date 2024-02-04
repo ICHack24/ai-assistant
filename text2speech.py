@@ -18,6 +18,7 @@ class Text2Speech():
             model="tts-1",
             voice="shimmer",
             input=text,
+            speed=1.3,
         )
 
         # Remove file if it already exists
