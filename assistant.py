@@ -26,7 +26,9 @@ class Assistant():
     def __init__(self,
                  cache_path="llm_cache.json",
                  assistant_name='Aida',
-                 llm_model='gpt-4'):
+                 llm_model='gpt-4',
+                 typing=False):
+        self.typing = typing
         self.speech2text = Speech2Text()
         self.text2speech = Text2Speech()
         self.assistant_name = assistant_name
@@ -63,8 +65,8 @@ class Assistant():
         self.speak(introduction)
 
     def speak(self, 
-              response: Union[str, ChatCompletionMessage],
-              mode="speech"):
+              response: Union[str, ChatCompletionMessage]):
+        mode = "text" if self.typing else "speech"
         if isinstance(response, str):
             r_text = response
         else:
@@ -74,6 +76,7 @@ class Assistant():
             self.text2speech.speak(r_text)
             
     def listen(self, mode="speech") -> ChatCompletion:
+        mode = "text" if self.typing else "speech"
         self.tool_choice = None
         if mode == "text":
             user_input = input("You: ")
@@ -261,5 +264,5 @@ class Assistant():
 
 if __name__ == '__main__':
     # assistant = Assistant(llm_model="gpt-3.5-turbo-0125")
-    assistant = Assistant(llm_model="gpt-4")
+    assistant = Assistant(llm_model="gpt-4", typing=False)
     assistant.converse()
