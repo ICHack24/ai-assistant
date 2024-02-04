@@ -14,7 +14,8 @@ from googleapiclient.discovery import build
 
 class EmailAPI():
 
-    SCOPES = ['https://www.googleapis.com/auth/gmail.readonly',
+    SCOPES = ['https://www.googleapis.com/auth/calendar',
+              'https://www.googleapis.com/auth/gmail.readonly',
               'https://www.googleapis.com/auth/gmail.send']
 
     def __init__(self) -> None:
@@ -181,16 +182,16 @@ class EmailAPI():
 
 if __name__ == '__main__':
     email_api = EmailAPI()
-    info = email_api.get_recent_emails(15)
-    for email in info:
-        print(f"{email}\n\n")
+    # info = email_api.get_recent_emails(15)
+    # for email in info:
+    #     print(f"{email}\n\n")
 
-    subject = 'testing sending'
-    email_content = "Hey there I am a friendly bot"
-    to = "ivankapelyukh@gmail.com"
-    # email_api.send_email(to, subject, email_content)
+    # subject = 'testing sending'
+    # email_content = "Hey there I am a friendly bot"
+    # to = "ivankapelyukh@gmail.com"
+    # # email_api.send_email(to, subject, email_content)
 
-    email_api.reply_email(info[-2], email_content)
+    # email_api.reply_email(info[-2], email_content)
 
 
 
