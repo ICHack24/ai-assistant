@@ -1,8 +1,8 @@
 import os
-import pdb
-import time
-import openai
+from typing import Union
 from openai import OpenAI
+from openai.types.chat import (
+    ChatCompletion, ChatCompletionMessage, ChatCompletionMessageToolCall)
 import json
 import re
 
@@ -21,6 +21,39 @@ class LangModel():
         if cache_path:
             self.cache = json.load(open(cache_path, "r"))
         self.client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+        self.messages = []
+
+    def system_prompt(self, prompt: str):
+        message = {
+            'role': 'system',
+            'content': prompt
+        }
+        self.messages.append(message)
+        # response = self.client.chat.completions.create(
+        #         model=self.model_name,
+        #         messages=self.messages,
+        #     )
+        # return response
+    
+    def assistant_prompt(self, prompt: str):
+        message = {
+            'role': 'assistant',
+            'content': prompt
+        }
+        self.messages.append(message)
+        return prompt
+    
+    def tool_prompt(self, 
+                    f_id: int,
+                    f_name: str,
+                    f_results: str):
+        message = {
+            "role": "tool",
+            "tool_call_id": f_id,
+            "name": f_name,
+            "content": f_results
+        }
+        self.messages.append(message)
 
     def submit_prompt(self, prompt, temperature=0.0, silent=False):
         if self.cache_path and self.check_cache and prompt in self.cache.keys():
@@ -53,19 +86,33 @@ class LangModel():
             return completion
         
     @retry(wait=wait_random_exponential(multiplier=1, max=40), stop=stop_after_attempt(3))
-    def chat_completion_request(self, messages, tools=None, tool_choice=None):
+    def chat(self, prompt:str, tools=None, tool_choice=None) -> ChatCompletion:
+        message = {
+            'role': 'user',
+            'content': prompt,
+        }
+        self.messages.append(message)
         try:
-            response = self.client.chat.completions.create(
+            output = self.client.chat.completions.create(
                 model=self.model_name,
-                messages=messages,
+                messages=self.messages,
                 tools=tools,
                 tool_choice=tool_choice,
             )
-            return response
+            response = output.choices[0].message
+            self.messages.append(response)
+            return output
         except Exception as e:
             print("Unable to generate ChatCompletion response")
             print(f"Exception: {e}")
             return e
+        
+    # def register_chat_response(self, output):
+    #     response = output.choices[0].message
+    #     self.messages.append(response)
+
+    # def register_function_call(self, response):
+    #     pass
 
 
 if __name__ == '__main__':

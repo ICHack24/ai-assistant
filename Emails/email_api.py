@@ -25,6 +25,10 @@ class EmailAPI():
         user_info = self.service.users().getProfile(userId='me').execute()
         self.user_email = user_info['emailAddress']
 
+        self.saved_emails = None
+        self.last_email_id = None
+        self.get_recent_emails(n_emails=1)
+
     def _authenticate(self):
         creds = None
         # The file token.json stores the user's access and refresh tokens, and is
@@ -32,7 +36,7 @@ class EmailAPI():
         # time.
 
         current_dir = os.path.dirname(os.path.realpath(__file__))
-        parent_dir = Path(current_dir).parent
+        parent_dir = Path(current_dir).parent.parent
 
         token_path = parent_dir / "token.json"
         credentials_path = parent_dir / "credentials.json"
@@ -84,6 +88,25 @@ class EmailAPI():
             "content": content,
         }
     
+    def check_unread_emails(self) -> int:
+        # List the most recent emails
+        results = self.service.users().messages().list(userId=self.user_email, labelIds=['INBOX'], maxResults=20).execute()
+        messages = results.get('messages', [])
+
+        if not messages:
+            return 0
+        else:
+            unread_emails = 0
+            for message in messages:
+                msg = self.service.users().messages().get(userId=self.user_email, id=message['id']).execute()
+                header_info = msg['payload']['headers']
+                msg_id = [h['value'] for h in header_info
+                          if h['name'].lower() == "message-id"][0]
+                if msg_id == self.last_email_id:
+                    break
+                unread_emails += 1
+        return unread_emails
+
     def get_recent_emails(self, n_emails: int=15):
         # List the most recent emails
         results = self.service.users().messages().list(userId=self.user_email, labelIds=['INBOX'], maxResults=n_emails).execute()
@@ -93,12 +116,13 @@ class EmailAPI():
             print('No messages found.')
             return []
         else:
-            print(f'Most recent emails ({len(messages)}):')
             emails_info = []
             for message in messages:
                 msg = self.service.users().messages().get(userId=self.user_email, id=message['id']).execute()
                 info = self._create_email_dictionary(msg)
                 emails_info.append(info)
+        self.saved_emails = emails_info
+        self.last_email_id = emails_info[0]["messageId"]
         return emails_info
     
     def _create_message(self, receiver, subject, body):
@@ -118,6 +142,15 @@ class EmailAPI():
             print(f"Message sent: {sent_message['id']}")
         except Exception as error:
             print(f"An error occurred: {error}")
+
+    def reply_to_someone(self, 
+                         receiver_name: str,
+                         body: str):
+        seen_names = [email['sender'] for email in self.saved_emails]
+        relevant_email = seen_names.index(receiver_name)
+        email_info = self.saved_emails[relevant_email]
+        return self.reply_email(email_info, body)
+
 
     def reply_email(self, message_info: dict, body: str):
         message = MIMEMultipart()
@@ -139,9 +172,11 @@ class EmailAPI():
         try:
             sent_message = self.service.users().messages().send(
                 userId=self.user_email, body=reply).execute()
-            print(f"Message sent: {sent_message['id']}")
+            # print(f"Message sent: {sent_message['id']}")
+            return True
         except Exception as error:
-            print(f"An error occurred: {error}")
+            # print(f"An error occurred: {error}")
+            return False
 
 
 if __name__ == '__main__':
