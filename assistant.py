@@ -94,7 +94,7 @@ class Assistant():
 
     def _process_function_call(self,
                                response: ChatCompletionMessage):
-        print(f"\n\nFunc Response:\n{response}\n\n")
+        # print(f"\n\nFunc Response:\n{response}\n\n")
         function_info = response.tool_calls[0].function
         f_id = response.tool_calls[0].id
         f_name = function_info.name
@@ -157,6 +157,17 @@ class Assistant():
             user_prompt = \
                 "Reply to my previous request by letting " +\
                 "me know if you sent the email successfully."
+            
+        if f_name == "emails_send":
+            f_results = emails_send(self.emailAPI, f_args)
+            # print(f"\n\nTool input:\n{f_results}\n\n")
+            self.lang_model.tool_prompt(
+                f_id, f_name, f_results
+            )
+            user_prompt = \
+                "Reply to my previous request by letting " +\
+                "me know if you sent the email successfully."
+            
         return user_prompt
 
     def _process_calendar_funcs(self,

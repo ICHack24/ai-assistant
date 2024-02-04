@@ -91,6 +91,49 @@ email_tools = [
             }
         }
     },
+
+    {
+        "type": "function",
+        "function": {
+            "name": "emails_send",
+            "description": "Send a new email to someone that is " \
+                           "not a reply to a received email",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "email_address": {
+                        "type": "string",
+                        "description": "The email address to which the email " \
+                                       "will be sent.",
+                    },
+                    "body": {
+                        "type": "string",
+                        "description": "This will be the body of the email. " +
+                                       "The user will provide a summary of what " +
+                                       "they want the email to be about. However " +
+                                       "you should use that summary to write a " +
+                                       "more elaborated body of text.",
+                    },
+                    "subject": {
+                        "type": "string",
+                        "description": "The subject of the email. If provided by the " \
+                                       "user, use exactly the provided subject. Otherwise, " \
+                                       "infer it from the body",
+                    },
+                },
+                "required": ["email_address", "body", "subject"]
+            },
+            "outputs": {
+                "type": "object",
+                "properties": {
+                    "output": {
+                        "type": "boolean",
+                        "description": "Whether the email was successfully sent",
+                    },
+                },
+            }
+        }
+    },
 ]
 
 sending = {

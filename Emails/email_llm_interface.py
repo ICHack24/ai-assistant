@@ -39,5 +39,13 @@ def emails_reply(api: EmailAPI, f_args:str):
         body=json.loads(f_args)["body"],
     )
     return str(success)
+
+def emails_send(api: EmailAPI, f_args:str):
+    success = api.send_email(
+        to=json.loads(f_args)["email_address"],
+        subject=json.loads(f_args)["subject"],
+        body=json.loads(f_args)["body"],
+    )
+    return str(success)
     
     

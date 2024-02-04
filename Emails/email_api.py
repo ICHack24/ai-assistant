@@ -144,9 +144,10 @@ class EmailAPI():
             message = self._create_message(to, subject, body)
             sent_message = self.service.users().messages().send(
                 userId=self.user_email, body=message).execute()
-            print(f"Message sent: {sent_message['id']}")
+            return True
         except Exception as error:
-            print(f"An error occurred: {error}")
+            # print(f"An error occurred: {error}")
+            return False
 
     def reply_to_someone(self, 
                          receiver_name: str,
