@@ -58,7 +58,6 @@ class Assistant():
             "Don't make assumptions about what values to plug into functions. " +\
             "Ask for clarification if a user request is ambiguous."
         self.lang_model.system_prompt(func_instructions)
-        print("AI has finished loading")
         input()
         introduction = \
         f"Good afternoon, I am {self.assistant_name}, your " +\
