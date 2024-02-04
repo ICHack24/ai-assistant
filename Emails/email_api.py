@@ -4,6 +4,7 @@ from pathlib import Path
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import base64
+from tenacity import retry, wait_random_exponential, stop_after_attempt
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -22,13 +23,16 @@ class EmailAPI():
         self.creds = self._authenticate()
         self.service = build('gmail', 'v1', credentials=self.creds)
 
-        # Get the user's Gmail account information
-        user_info = self.service.users().getProfile(userId='me').execute()
-        self.user_email = user_info['emailAddress']
-
+        self.connect()
         self.saved_emails = None
         self.last_email_id = None
         self.get_recent_emails(n_emails=1)
+
+    @retry(wait=wait_random_exponential(multiplier=0.5, max=40), stop=stop_after_attempt(5))
+    def connect(self):
+        # Get the user's Gmail account information
+        user_info = self.service.users().getProfile(userId='me').execute()
+        self.user_email = user_info['emailAddress']
 
     def _authenticate(self):
         creds = None

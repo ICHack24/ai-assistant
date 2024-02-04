@@ -85,7 +85,7 @@ class Speech2Text:
 
     def hear_command(self):
         self.record(self.temp_voice_path)
-        transcription = self.transcribe(self.temp_voice_path).trim()
+        transcription = self.transcribe(self.temp_voice_path).strip()
         return transcription
 
 if __name__ == "__main__":

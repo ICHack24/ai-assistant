@@ -1,5 +1,6 @@
 from typing import Union
 import warnings
+from booking.booking_api import BookingAPI
 
 from llm import LangModel
 from speech2text import Speech2Text
@@ -9,12 +10,14 @@ from Emails.email_llm_interface import *
 from Calendar.calendar_api import CalendarAgent
 from Calendar.func_schema import calendar_tools
 from Calendar.cal_llm_interface import *
+from booking.booking_func_schema import booking_tools
+from booking.booking_llm_interface import *
 
 from openai.types.chat import ChatCompletion, ChatCompletionMessage
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
-tools = email_tools + calendar_tools
+tools = email_tools + calendar_tools + booking_tools
 
 class Assistant():
     def __init__(self,
@@ -30,11 +33,12 @@ class Assistant():
 
         self.emailAPI = EmailAPI()
         self.calendarAPI = CalendarAgent()
+        self.bookingAPI = BookingAPI()
         self._initialise_assistant()
 
     def _initialise_assistant(self):
         initial_prompt = \
-            f"You are an AI assistant named {self.assistant_name}. Your" +\
+            f"It is Sunday 4th February 2024 and you are an AI assistant named {self.assistant_name}. Your" +\
             "purpose is to help the user in its daily chores. More "+\
             "specifically you are able to read and write emails. You are " +\
             "also aware of the calendar events of the user and are able to " +\
@@ -105,8 +109,13 @@ class Assistant():
             user_prompt = self._process_calendar_funcs(
                 f_id, f_name, f_args
             )
-        self.tool_choice = 'none'
-        self._prompt_model(user_prompt)
+        elif f_entity == "booking":
+            user_prompt = self._process_booking_funcs(
+                f_id, f_name, f_args
+            )
+        if user_prompt is not None:
+            self.tool_choice = 'none'
+            self._prompt_model(user_prompt)
 
     def _process_email_funcs(self,
                              f_id: int,
@@ -175,8 +184,11 @@ class Assistant():
                 f_id, f_name, f_results
             )
             user_prompt = \
-                "Reply to my previous request by letting " +\
-                "me know if you created the event successfully."
+                "Reply to my previous request and summarise, " +\
+                "in a list format and in a single sentence " +\
+                "per event, all the events information " +\
+                "you have just collected. If there are no " +\
+                "events, tell me so."
 
         if f_name == "calendar_add_event":
             f_results = create_event(
@@ -186,12 +198,37 @@ class Assistant():
                 f_id, f_name, f_results
             )
             user_prompt = \
-                "Reply to my previous request and summarise, " +\
-                "in a list format and in a single sentence " +\
-                "per event, all the events information " +\
-                "you have just collected. If there are no " +\
-                "events, tell me so."
+                "Reply to my previous request by letting " +\
+                "me know if you created the event successfully."
+            
         return user_prompt
+
+    # Example user request: Can you please help me book a table for 2 at my favourite restaurant for 7pm next Saturday?
+    def _process_booking_funcs(self,
+                                f_id: int,
+                                f_name: str,
+                                f_args: str):
+        if f_name == "booking_create_booking":
+            f_results = create_booking(self.bookingAPI, f_args)
+            # print(f"\n\nTool input:\n{f_results}\n\n")
+            self.lang_model.tool_prompt(
+                f_id, f_name, f_results
+            )
+            
+            user_prompt = \
+                "Reply to my previous request by letting " +\
+                "me know that you submitted the booking request. " +\
+                "Be positive but concise. Mention the name of " +\
+                "the restaurant. Ignore anything about whether " +\
+                "the booking was confirmed or not. Additionally add " +\
+                "this reservation as a new event in my calendar."
+            self.tool_choice={
+                "type": "function",
+                "function": {
+                    "name": "calendar_add_event"
+                }}
+            self._prompt_model(user_prompt)
+        return None
 
     def converse(self):
         # print('You are now speaking to the AI assistant')
