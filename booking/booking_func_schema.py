@@ -13,7 +13,7 @@ booking_tools = [
                     },
                     "time": {
                         "type": "string",
-                        "description": "The time to book the table for. Example format: 21:00",
+                        "description": "The time to book the table for. If the user does not provide a time, then infer it based on the rest of the user request and common sense. Example format: 09:00",
                     },
                     "people": {
                         "type": "integer",
