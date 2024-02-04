@@ -37,6 +37,7 @@ class Speech2Text:
             self.recording = not self.recording
 
     def record(self, out_path):
+        print('The AI is ready to listen')
         print('Press space to unmute')
 
         # Start the listener in a non-blocking way
@@ -86,6 +87,8 @@ class Speech2Text:
     def hear_command(self):
         self.record(self.temp_voice_path)
         transcription = self.transcribe(self.temp_voice_path).strip()
+        print('You:')
+        print(transcription)
         return transcription
 
 if __name__ == "__main__":

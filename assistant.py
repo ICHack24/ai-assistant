@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Union
 import warnings
 from booking.booking_api import BookingAPI
@@ -37,8 +38,9 @@ class Assistant():
         self._initialise_assistant()
 
     def _initialise_assistant(self):
+        curr_date = date.today()
         initial_prompt = \
-            f"It is Sunday 4th February 2024 and you are an AI assistant named {self.assistant_name}. Your" +\
+            f"The date is {curr_date} and you are an AI assistant named {self.assistant_name}. Your" +\
             "purpose is to help the user in its daily chores. More "+\
             "specifically you are able to read and write emails. You are " +\
             "also aware of the calendar events of the user and are able to " +\
@@ -68,12 +70,13 @@ class Assistant():
             print(f"\n{self.assistant_name}:\n{r_text}\n")
         #TODO: Add text to speech
             
-    def listen(self, mode="text") -> ChatCompletion:
+    def listen(self, mode="speech") -> ChatCompletion:
         self.tool_choice = None
         if mode == "text":
             user_input = input("You: ")
         if mode == "speech":
             user_input = self.speech2text.hear_command()
+        print("The AI is processing your request")
         return self._prompt_model(user_input)
     
     def _prompt_model(self, user_input: str) -> ChatCompletion:
