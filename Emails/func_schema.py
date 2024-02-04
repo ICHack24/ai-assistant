@@ -104,7 +104,7 @@ email_tools = [
                     "email_address": {
                         "type": "string",
                         "description": "The email address to which the email " \
-                                       "will be sent.",
+                                       "will be sent. Remember, since you are using speech2text, the user may be spelling out an email address, so you may need to correct it to the most likely email that they meant.",
                     },
                     "body": {
                         "type": "string",
