@@ -6,12 +6,15 @@ from speech2text import Speech2Text
 from Emails.email_api import EmailAPI
 from Emails.func_schema import email_tools
 from Emails.email_llm_interface import *
+from Calendar.calendar_api import CalendarAgent
+from Calendar.func_schema import calendar_tools
+from Calendar.cal_llm_interface import *
 
 from openai.types.chat import ChatCompletion, ChatCompletionMessage
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
-tools = email_tools
+tools = email_tools + calendar_tools
 
 class Assistant():
     def __init__(self,
@@ -26,6 +29,7 @@ class Assistant():
         self.tool_choice = None
 
         self.emailAPI = EmailAPI()
+        self.calendarAPI = CalendarAgent()
         self._initialise_assistant()
 
     def _initialise_assistant(self):
@@ -61,6 +65,7 @@ class Assistant():
         #TODO: Add text to speech
             
     def listen(self, mode="text") -> ChatCompletion:
+        self.tool_choice = None
         if mode == "text":
             user_input = input("You: ")
         if mode == "speech":
@@ -85,7 +90,7 @@ class Assistant():
 
     def _process_function_call(self,
                                response: ChatCompletionMessage):
-        # print(f"\n\nFunc Response:\n{response}\n\n")
+        print(f"\n\nFunc Response:\n{response}\n\n")
         function_info = response.tool_calls[0].function
         f_id = response.tool_calls[0].id
         f_name = function_info.name
@@ -93,9 +98,15 @@ class Assistant():
         f_entity = f_name.split("_")[0]
         
         if f_entity == "emails":
-            self._process_email_funcs(
+            user_prompt = self._process_email_funcs(
                 f_id, f_name, f_args
             )
+        elif f_entity == "calendar":
+            user_prompt = self._process_calendar_funcs(
+                f_id, f_name, f_args
+            )
+        self.tool_choice = 'none'
+        self._prompt_model(user_prompt)
 
     def _process_email_funcs(self,
                              f_id: int,
@@ -112,7 +123,7 @@ class Assistant():
                 "the information of the emails you " +\
                 "just read in a single sentence per email, " +\
                 "specifying the sender's name"
-            self._prompt_model(user_prompt)
+            
 
         if f_name == "emails_check_unread":
             f_results = emails_check_unread(self.emailAPI)
@@ -127,7 +138,6 @@ class Assistant():
                 "summarise in a single sentence per email " +\
                 "the contents of the emails you just " +\
                 "read, specifying the sender's name"
-            self._prompt_model(user_prompt)
 
         if f_name == "emails_reply":
             f_results = emails_reply(self.emailAPI, f_args)
@@ -138,7 +148,50 @@ class Assistant():
             user_prompt = \
                 "Reply to my previous request by letting " +\
                 "me know if you sent the email successfully."
-            self._prompt_model(user_prompt)
+        return user_prompt
+
+    def _process_calendar_funcs(self,
+                                f_id: int,
+                                f_name: str,
+                                f_args: str):
+        if f_name == "calendar_get_upcoming":
+            f_results = calendar_upcoming(self.calendarAPI)
+            # print(f"\n\nTool input:\n{f_results}\n\n")
+            self.lang_model.tool_prompt(
+                f_id, f_name, f_results
+            )
+            user_prompt = \
+                "Reply to my previous request and summarise, " +\
+                "in a list format and in a single sentence " +\
+                "per event, all the events information " +\
+                "you have just collected. If there are no " +\
+                "events, tell me so."
+
+        if f_name == "calendar_events_in_time_period":
+            f_results = events_over_period(
+                self.calendarAPI, f_args)
+            # print(f"\n\nTool input:\n{f_results}\n\n")
+            self.lang_model.tool_prompt(
+                f_id, f_name, f_results
+            )
+            user_prompt = \
+                "Reply to my previous request by letting " +\
+                "me know if you created the event successfully."
+
+        if f_name == "calendar_add_event":
+            f_results = create_event(
+                self.calendarAPI, f_args)
+            # print(f"\n\nTool input:\n{f_results}\n\n")
+            self.lang_model.tool_prompt(
+                f_id, f_name, f_results
+            )
+            user_prompt = \
+                "Reply to my previous request and summarise, " +\
+                "in a list format and in a single sentence " +\
+                "per event, all the events information " +\
+                "you have just collected. If there are no " +\
+                "events, tell me so."
+        return user_prompt
 
     def converse(self):
         # print('You are now speaking to the AI assistant')
@@ -153,5 +206,6 @@ class Assistant():
             # print(response)
 
 if __name__ == '__main__':
-    assistant = Assistant(llm_model="gpt-3.5-turbo-0125")
+    # assistant = Assistant(llm_model="gpt-3.5-turbo-0125")
+    assistant = Assistant(llm_model="gpt-4")
     assistant.converse()
