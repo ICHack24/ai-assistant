@@ -9,7 +9,7 @@ def calendar_upcoming(api: CalendarAgent):
 def events_over_period(api: CalendarAgent, f_args):
     events_info = api.get_events_in_time_period(
         period_start=json.loads(f_args)["startDateTime"],
-        period_end=json.loads(f_args)["startDateTime"],
+        period_end=json.loads(f_args)["endDateTime"],
     )
     return str(events_info)
 

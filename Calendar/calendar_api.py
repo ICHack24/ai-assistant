@@ -76,6 +76,7 @@ class CalendarAgent():
             .list(
                 calendarId="primary",
                 maxResults=10,
+                timeMin="2024-02-03T12:00:00Z",
                 singleEvents=True,
                 orderBy="startTime",
             )
@@ -93,16 +94,18 @@ class CalendarAgent():
     def get_events_in_time_period(self,
                                   period_start,
                                   period_end) -> List[dict]:
-        if period_end == period_start:
-            print("It is None")
+        if period_end is None:
+            print(period_end is None)
             period_end = period_start.split("T")[0]
-            period_end = period_end + 'T23:59:59'
+            period_end = period_end + 'T23:59:59Z'
+            
         events_result = (
             self.service.events()
             .list(
                 calendarId='primary',
                 timeMin=period_start,
                 timeMax=period_end, 
+                singleEvents=True,
                 timeZone="Europe/London"
             ).execute())
         events = events_result.get("items", [])

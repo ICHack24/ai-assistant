@@ -74,6 +74,48 @@ calendar_tools = [
             }
         }
     },
+
+    {
+        "type": "function",
+        "function": {
+            "name": "calendar_events_in_time_period",
+            "description": "Get information regarding the " +\
+                           "events in the user's calendar " +\
+                           "within a certain time period",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "startDateTime": {
+                        "type": "string",
+                        "description": "The date and time of the start " \
+                                       "of the considered period, expressed " \
+                                       "in ISO format with time zone ofset. If no time is specified " \
+                                       "assume the start of day T00:00:01Z",
+                    },
+                    "endDateTime": {
+                        "type": "string",
+                        "description": "The date and time of the end " \
+                                       "of the considered period, expressed " \
+                                       "in ISO format with time zone offset." \
+                                       "If, and only if, no end date is provided and just a single day is mentioned " \
+                                       "by the user, set this to 'None'",
+                    },
+                },
+                "required": ['startDateTime', 'endDateTime']
+            },
+            "outputs": {
+                "type": "object",
+                "properties": {
+                    "output": {
+                        "type": "list",
+                        "description": "The output will be a list of dictionaries " +
+                                       f"Each dictionary will be of the form {dictionary_form}." +
+                                       "If there are no events the list will be epty",
+                    },
+                },
+            }
+        }
+    },
 ]
 
 period_events = {
